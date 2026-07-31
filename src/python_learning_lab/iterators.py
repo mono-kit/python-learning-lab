@@ -37,7 +37,7 @@ def flatten(groups: Iterable[Iterable[int]]) -> Iterator[int]:
 def take(count: int, values: Iterable[int]) -> list[int]:
     """只消费可迭代对象的前 count 项。"""
     result: list[int] = []
-    iterator: iter(values)
+    iterator = iter(values)
     for _ in range(count):
         try:
             result.append(next(iterator))
