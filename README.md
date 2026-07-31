@@ -62,5 +62,6 @@ tests/                      用 pytest 描述正确行为
 docs/                       学习路线和 Pydantic 讲义
 ```
 
-更多顺序说明见 [`docs/roadmap.md`](docs/roadmap.md)，Pydantic 专题见 [`docs/pydantic.md`](docs/pydantic.md)。
-
+更多顺序说明见 [`docs/roadmap.md`](docs/roadmap.md)，阶段复习见
+[`docs/review.md`](docs/review.md)，Pydantic 专题见
+[`docs/pydantic.md`](docs/pydantic.md)。
