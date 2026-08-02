@@ -1,8 +1,10 @@
-# Python 学习复习提纲
+# Python 学习结业复习提纲
 
 ## 当前进度
 
-目前已经完成 Python 基础到常用标准库，下一阶段是 Pydantic。
+目前已经完成本仓库的全部课程：Python 基础、面向对象、异常、
+迭代与异步、常用标准库、Pydantic 2 和 pytest 实践。完整测试集为
+24 项，当前全部通过。
 
 | 模块 | 核心内容 |
 |---|---|
@@ -14,6 +16,8 @@
 | `iterators.py` | iterable、iterator、generator、惰性计算 |
 | `async_demo.py` | coroutine、await、TaskGroup、async generator |
 | `stdlib_demo.py` | Counter、defaultdict、JSON、islice、lru_cache |
+| `pydantic_lab/` | 模型、约束、校验器、序列化、Settings |
+| `tests/` | pytest、异常断言、参数化、临时环境变量 |
 
 ## 1. 基础语法
 
@@ -477,29 +481,196 @@ def fibonacci_recursive(number):
 
 适合缓存“相同输入始终产生相同输出”的纯函数。
 
-## 当前待修正
+## 9. Pydantic 2
 
-`src/python_learning_lab/iterators.py` 的 `take()` 中目前写的是：
+文件：`src/python_learning_lab/pydantic_lab/`
 
-```python
-iterator: iter(values)
-```
-
-冒号只是变量标注，没有给 `iterator` 赋值，因此会导致 `UnboundLocalError`。
-
-应改为赋值：
+### BaseModel 和模型字段
 
 ```python
-iterator = iter(values)
+class User(BaseModel):
+    name: str
+    age: int = 18
 ```
 
-或者同时标注并赋值：
+`User` 确实继承 `BaseModel`。Pydantic 的元类会在创建 `User` 时读取
+类型标注，把 `name` 和 `age` 从普通类属性转换为模型字段：
 
 ```python
-iterator: Iterator[int] = iter(values)
+User.model_fields["age"].default  # 18
 ```
 
-当前完整测试有 13 项通过，1 项因此失败。
+创建实例后，经过校验的值进入实例：
+
+```python
+user = User(name="Ada", age="20")
+user.__dict__  # {"name": "Ada", "age": 20}
+```
+
+真正的共享类属性需要显式使用 `ClassVar`：
+
+```python
+company: ClassVar[str] = "Python Lab"
+```
+
+### 字段约束和模型配置
+
+```python
+name: str = Field(min_length=2, max_length=50)
+age: int = Field(ge=0, le=150)
+```
+
+常用约束包括 `gt`、`ge`、`lt`、`le`、`min_length`、
+`max_length` 和 `pattern`。
+
+```python
+model_config = ConfigDict(
+    extra="forbid",
+    str_strip_whitespace=True,
+)
+```
+
+- `extra="forbid"` 拒绝未声明字段。
+- `str_strip_whitespace=True` 去除字符串两端空白。
+
+### 字段和模型校验器
+
+```python
+@field_validator("tags", mode="before")
+@classmethod
+def normalize_tags(cls, value):
+    ...
+```
+
+- `mode="before"` 接收原始输入，适合清洗和格式转换。
+- 默认的 after 校验器接收已经完成标准类型校验的值。
+
+```python
+@model_validator(mode="after")
+def admin_must_be_adult(self) -> Self:
+    if self.role is Role.ADMIN and self.age < 18:
+        raise ValueError("管理员必须年满 18 岁")
+    return self
+```
+
+单字段规则使用 `field_validator`，跨字段规则使用 `model_validator`。
+
+### 嵌套模型和数据边界
+
+```text
+UserCreate
+→ 接收并校验外部注册输入
+
+User
+→ 系统内部完整对象，增加 UUID 和创建时间
+
+UserPublic
+→ 只包含允许公开的字段
+```
+
+Pydantic 可以把嵌套字典转换成真正的模型对象，错误路径也会保留为
+`address.zip_code` 这样的完整位置。
+
+### 默认工厂和计算字段
+
+```python
+id: UUID = Field(default_factory=uuid4)
+created_at: datetime = Field(
+    default_factory=lambda: datetime.now(UTC)
+)
+```
+
+`default_factory` 在每次创建实例时调用，避免共享同一个动态默认值。
+
+```python
+@computed_field
+@property
+def display_name(self) -> str:
+    return f"{self.name} ({self.role.value})"
+```
+
+`computed_field` 会让计算属性参与模型序列化。
+
+### 序列化和 ValidationError
+
+```python
+model.model_dump()               # Python 字典
+model.model_dump(mode="json")   # JSON 兼容字典
+model.model_dump_json(indent=2)  # JSON 字符串
+```
+
+```python
+for item in error.errors():
+    item["loc"]
+    item["type"]
+    item["msg"]
+```
+
+程序判断错误类型时优先使用结构化的 `type`，不要依赖可能变化的完整
+英文错误消息。
+
+### Pydantic Settings
+
+```python
+class AppSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="LAB_",
+        env_file=".env",
+    )
+
+    debug: bool = False
+    port: int = Field(default=8000, ge=1, le=65535)
+```
+
+环境变量本质上是字符串，Settings 负责读取、转换和校验：
+
+```text
+LAB_DEBUG=true → True
+LAB_PORT=9000  → 9000
+```
+
+## 10. pytest 实践
+
+文件：`tests/`
+
+### 普通断言和异常断言
+
+```python
+assert user.age == 36
+
+with pytest.raises(ValidationError) as captured:
+    UserCreate.model_validate(payload)
+```
+
+### 参数化测试
+
+```python
+@pytest.mark.parametrize("quantity", [0, 100])
+def test_invalid_quantity(quantity: int) -> None:
+    ...
+```
+
+一份测试逻辑可以覆盖多个边界输入。
+
+### 浮点数和临时环境
+
+```python
+assert cart.total == pytest.approx(898.0)
+monkeypatch.setenv("LAB_PORT", "9000")
+```
+
+- `pytest.approx` 处理浮点数误差。
+- `monkeypatch` 在测试后自动恢复临时环境。
+
+测试不仅验证正确结果，还要覆盖非法输入、边界值、异常后的状态，以及
+不应出现在公开输出中的敏感字段。
+
+## 当前项目状态
+
+- `take()` 已改为精确消费迭代器，不会额外取走一项。
+- OOP 和 Pydantic 练习均已完成。
+- Pydantic 练习的边界测试已经加入项目。
+- 完整测试集为 24 项，全部通过。
 
 ## 复习自测
 
@@ -515,8 +686,16 @@ iterator: Iterator[int] = iter(values)
 10. `TaskGroup` 与依次 `await` 有什么区别？
 11. `Counter` 和 `defaultdict` 分别适合什么问题？
 12. `lru_cache` 为什么能显著加快递归斐波那契？
+13. `BaseModel` 怎样把类体中的字段声明转换成模型字段？
+14. `ClassVar` 和 Pydantic 模型字段有什么区别？
+15. before 和 after 字段校验器分别适合什么情况？
+16. 为什么输入模型、内部模型和公开模型要分开？
+17. `model_dump(mode="json")` 与 `model_dump_json()` 有什么区别？
+18. `pytest.raises`、`parametrize` 和 `monkeypatch` 分别解决什么问题？
 
-## 下一步
+## 后续复习方式
 
-1. 修正 `take()` 并恢复全部测试通过。
-2. 开始学习 Pydantic。
+1. 一周后不看源码回答上面的 18 个问题。
+2. 只看测试，重新实现一个练习模型或函数。
+3. 为购物车补充“购买数量不能超过库存”的跨字段校验。
+4. 做一个小型综合项目，把 JSON、Pydantic、异常、生成器和 pytest 串起来。
