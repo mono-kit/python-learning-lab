@@ -24,5 +24,8 @@ def test_version_rejects_invalid_text(text: str) -> None:
 
 
 def test_version_does_not_compare_to_unrelated_type() -> None:
+    version = Version(1, 0, 0)
+
+    assert version.__lt__((1, 0, 0)) is NotImplemented
     with pytest.raises(TypeError):
-        _ = Version(1, 0, 0) < (1, 0, 0)
+        _ = version < (1, 0, 0)
