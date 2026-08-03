@@ -2,8 +2,12 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.nox/
 .coverage
 dist/
 build/
 *.egg-info/
+*.db
 .DS_Store
