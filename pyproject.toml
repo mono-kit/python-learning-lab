@@ -5,9 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "python-learning-lab"
 version = "0.1.0"
-description = "A runnable Chinese learning project for Python syntax, standard library, testing, and Pydantic"
+description = "A runnable Chinese course for Python language internals and engineering"
 readme = "README.md"
 requires-python = ">=3.11"
+authors = [{ name = "mono" }]
 dependencies = [
   "pydantic[email]>=2.7,<3",
   "pydantic-settings>=2.2,<3",
@@ -15,15 +16,36 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "build>=1.2,<2",
+  "mypy>=1.11,<2",
+  "nox>=2025.5",
   "pytest>=8,<10",
   "pytest-asyncio>=0.23,<2",
+  "ruff>=0.9",
+  "twine>=6,<7",
 ]
+
+[project.scripts]
+python-learning-lab = "python_learning_lab.__main__:main"
+
+[project.urls]
+Repository = "https://github.com/mono-kit/python-learning-lab"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"python_learning_lab.advanced.imports_lab" = ["resources/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
 asyncio_mode = "auto"
 
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true

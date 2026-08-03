@@ -1,0 +1,13 @@
+[project]
+name = "legacy-report-tool"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2,<3"]
+
+[tool.rye]
+managed = true
+dev-dependencies = ["pytest>=8"]
+
+[tool.rye.scripts]
+test = "pytest"
+report = "python -m legacy_report"
