@@ -136,6 +136,13 @@ def main() -> None:
     print(f"MRO：{[item.__name__ for item in Service.__mro__]}")
     print(f"协作调用：{Service().process([])}")
 
+    account = Account("Ada", 36)
+    account.__dict__["name"] = "假的名字"
+    print(account.__dict__)
+    print(account.name)
+
+    print(Service.__mro__)
+
 
 if __name__ == "__main__":
     main()

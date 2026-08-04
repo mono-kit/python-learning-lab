@@ -5,16 +5,19 @@ from typing import Any
 
 class NonEmptyString:
     def __set_name__(self, owner: type[Any], name: str) -> None:
-        # TODO: 保存公开名和实际存储名。
-        pass
+        self.public_name = name
+        self.storage_name = f"_{name}"
 
     def __get__(self, instance: object | None, owner: type[Any] | None = None):
-        # TODO: 类访问返回描述器本身，实例访问返回已保存的字符串。
-        raise NotImplementedError
+        if instance is None:
+            return self
+        return getattr(instance, self.storage_name)
 
     def __set__(self, instance: object, value: str) -> None:
-        # TODO: strip 后不能为空，再写入实际存储名。
-        raise NotImplementedError
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError(f"{self.public_name} 不能为空")
+        setattr(instance, self.storage_name, normalized)
 
 
 class BoundedInteger:
@@ -23,16 +26,18 @@ class BoundedInteger:
         self.maximum = maximum
 
     def __set_name__(self, owner: type[Any], name: str) -> None:
-        # TODO
-        pass
+        self.public_name = name
+        self.storage_name = f"_{name}"
 
     def __get__(self, instance: object | None, owner: type[Any] | None = None):
-        # TODO
-        raise NotImplementedError
+        if instance is None:
+            return self
+        return getattr(instance, self.storage_name)
 
     def __set__(self, instance: object, value: int) -> None:
-        # TODO: 包含上下边界。
-        raise NotImplementedError
+        if not self.minimum <= value <= self.maximum:
+            raise ValueError(f"{self.public_name} 必须在 {self.minimum} 到 {self.maximum} 之间")
+        setattr(instance, self.storage_name, value)
 
 
 class Account:
