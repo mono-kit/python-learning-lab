@@ -2,7 +2,8 @@
 
 这份文档是高级阶段的实际学习入口。路线为什么这样安排见
 [`advanced-roadmap.md`](advanced-roadmap.md)，本文件回答每一章具体应该读什么、
-运行什么、写什么和怎样验收。
+运行什么、写什么和怎样验收。已经学完部分的复习记录见
+[`advanced-review.md`](advanced-review.md)。
 
 ## 如何使用
 

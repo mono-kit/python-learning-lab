@@ -80,6 +80,7 @@ docs/                       学习路线和 Pydantic 讲义
 更多顺序说明见 [`docs/roadmap.md`](docs/roadmap.md)，阶段复习见
 [`docs/review.md`](docs/review.md)，深入学习与工程实践见
 [`docs/advanced-roadmap.md`](docs/advanced-roadmap.md)，高级课程入口见
-[`docs/advanced-course.md`](docs/advanced-course.md)，模块、打包、发包与工具生态见
+[`docs/advanced-course.md`](docs/advanced-course.md)，高级阶段复习见
+[`docs/advanced-review.md`](docs/advanced-review.md)，模块、打包、发包与工具生态见
 [`docs/packaging.md`](docs/packaging.md)，Pydantic 专题见
 [`docs/pydantic.md`](docs/pydantic.md)。
