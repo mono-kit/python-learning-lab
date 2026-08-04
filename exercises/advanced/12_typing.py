@@ -4,7 +4,6 @@ from collections.abc import Callable, Hashable
 from functools import wraps
 from typing import Generic, ParamSpec, TypeVar
 
-
 K = TypeVar("K", bound=Hashable)
 V = TypeVar("V")
 P = ParamSpec("P")
@@ -13,24 +12,21 @@ R = TypeVar("R")
 
 class Cache(Generic[K, V]):
     def __init__(self) -> None:
-        # TODO: 用正确泛型参数标注字典。
-        self._values = {}
+        self._values: dict[K, V] = {}
 
     def put(self, key: K, value: V) -> None:
-        # TODO
-        raise NotImplementedError
+        self._values[key] = value
 
     def get(self, key: K) -> V | None:
-        # TODO
-        raise NotImplementedError
+        return self._values.get(key)
 
 
 def traced(callback: Callable[[str], None]) -> Callable[[Callable[P, R]], Callable[P, R]]:
     def decorate(function: Callable[P, R]) -> Callable[P, R]:
         @wraps(function)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-            # TODO: 记录函数名，再原样调用函数。
-            raise NotImplementedError
+            callback(function.__name__)
+            return function(*args, **kwargs)
 
         return wrapper
 
