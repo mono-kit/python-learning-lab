@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 
 class Event(BaseModel):
@@ -24,5 +25,27 @@ class InvalidRecord(ValueError):
 def validated_batches(path: Path, batch_size: int) -> Iterator[list[Event]]:
     """空行跳过；JSON 或模型错误转换为带行号的 InvalidRecord。"""
 
-    # TODO: 参数应在函数调用时立即检查，文件内容应在消费时惰性读取。
-    raise NotImplementedError
+    if batch_size <= 0:
+        raise ValueError("batch_size 必须大于 0")
+
+    def generator() -> Iterator[list[Event]]:
+        batch: list[Event] = []
+        with path.open(encoding="utf-8") as source:
+            for line_number, line in enumerate(source, start=1):
+                if not line.strip():
+                    continue
+                try:
+                    payload = json.loads(line)
+                    event = Event.model_validate(payload)
+                except (json.JSONDecodeError, ValidationError) as error:
+                    raise InvalidRecord(
+                        path=path, line_number=line_number, reason=str(error)
+                    ) from error
+                batch.append(event)
+                if len(batch) == batch_size:
+                    yield batch
+                    batch = []
+            if batch:
+                yield batch
+
+    return generator()
