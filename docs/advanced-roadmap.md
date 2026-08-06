@@ -8,7 +8,7 @@
 2. 能把一组函数和类组织成可测试、可维护、可发布的小型工程。
 
 学习完成后，应能独立完成一个带命令行、配置、持久化、并发处理、日志和
-完整测试的 Python 应用。
+完整测试的 Python 应用，并能通过 CLI 与 HTTP API 提供同一组核心能力。
 
 ## 学习方式
 
@@ -49,6 +49,12 @@ tests/                                 可执行需求
 | 18 | SQLite 与事务 | 可替换的持久化层和集成测试 |
 | 19 | 性能与诊断 | 用测量结果定位 CPU、内存和 I/O 问题 |
 | 20 | 综合项目：本地任务队列 | 串联全部语言和工程知识 |
+| 21 | HTTP 语义与标准库 | 本地 JSON 服务和零第三方依赖客户端 |
+| 22 | 同步 HTTP 客户端 | 可复用、可测试的连接池客户端 |
+| 23 | 异步 HTTP 客户端 | 有界并发请求与流式响应 |
+| 24 | HTTP 可靠性工程 | timeout、有限重试、幂等与安全边界 |
+| 25 | WSGI 与 ASGI 协议 | 原生 ASGI app、middleware 和生命周期 |
+| 26 | ASGI 服务工程 | 用 FastAPI/Uvicorn 暴露既有应用服务 |
 
 ## 10. Python 数据模型
 
@@ -517,6 +523,62 @@ PENDING → CANCELLED
 4. 中途失败不会破坏数据库状态或遗留异步任务。
 5. README 能让另一位开发者在十分钟内运行项目。
 
+## 21. HTTP 语义与 Python 标准库
+
+完整讲义：[`docs/http-and-asgi.md`](http-and-asgi.md)
+
+从 request/response、method、status、headers 和 body 出发，使用 `urllib.parse`、
+`http.client` 与 `urllib.request` 理解客户端层次，再用 `ThreadingHTTPServer` 和
+`BaseHTTPRequestHandler` 实现只绑定本机的 JSON 服务。
+
+完成标准：能区分 HTTP 错误与传输错误；响应带正确 Content-Type/Content-Length；
+测试使用随机端口并可靠回收线程和 socket；知道 `http.server` 不用于生产。
+
+## 22. 同步 HTTP 客户端与库生态
+
+比较 Requests、urllib3 与 HTTPX 的抽象层次，重点掌握 Session/Client 生命周期、
+连接池、显式 timeout、`raise_for_status()`、streaming 与 transport mock。实践主线使用
+HTTPX，其他库用于读懂既有项目和传输层。
+
+完成标准：客户端由 composition root 创建并关闭；单元测试不访问公网；HTTP 状态、
+传输失败和损坏数据不会混成一种异常。
+
+## 23. 异步 HTTP 客户端
+
+复用第 14 章的 TaskGroup、Semaphore、取消与有序结果，构建有并发上限的 AsyncClient
+请求器；使用 async streaming 处理大响应。对比 aiohttp 的 ClientSession、StreamReader
+及其独立服务端生态。
+
+完成标准：不在热循环创建客户端；外层取消不会被吞掉；响应和连接始终关闭；批量结果
+保持输入顺序且不把大 body 一次加载到内存。
+
+## 24. HTTP 可靠性工程
+
+区分 pool/connect/write/read timeout 与业务 deadline；学习有限重试、指数退避、jitter、
+`Retry-After`、幂等方法和 idempotency key。补充 TLS 验证、SSRF、redirect、proxy、
+日志脱敏和请求/响应大小限制。
+
+完成标准：能解释 read timeout 后为何不能盲目重试 POST；所有重试都有次数和时间预算；
+故障测试使用 fake 或 MockTransport，而不是等待真实网络偶然失败。
+
+## 25. WSGI、ASGI 与原生应用协议
+
+对比 PEP 3333 的同步调用模型与 ASGI 的连接事件模型，手写
+`async app(scope, receive, send)`，处理分块请求体、响应事件、disconnect、middleware
+和 lifespan，并认识 WebSocket 状态机。
+
+完成标准：能逐条画出事件顺序；不把 body 当作 scope 字段；middleware 的请求状态存放
+在局部变量；原始协议测试不启动真实服务器。
+
+## 26. ASGI 服务工程
+
+区分 Uvicorn/Hypercorn/Daphne 等 server 与 Starlette/FastAPI 等 framework。用 FastAPI
+把既有 TaskService 适配为 HTTP API，用 Pydantic 处理输入输出，把领域异常映射为 404
+与 409，并用 HTTPX ASGITransport 做进程内测试。
+
+完成标准：路由不直接访问仓库、不复制领域规则；能说明 lifespan 与多 worker 的关系；
+能解释同步 SQLite 代码为何不能因为放进 `async def` 就成为异步 I/O。
+
 ## 推荐节奏
 
 | 周次 | 内容 |
@@ -534,6 +596,10 @@ PENDING → CANCELLED
 | 11 | SQLite、事务和集成测试 |
 | 12 | 性能诊断与综合项目设计 |
 | 13～14 | 完成综合项目和复盘 |
+| 15 | HTTP 语义、标准库客户端与本地服务 |
+| 16 | 同步/异步客户端、连接池与流式 I/O |
+| 17 | timeout、重试、幂等和 HTTP 安全边界 |
+| 18 | 原生 ASGI、框架生态与任务服务 API |
 
 每周建议安排三次学习：
 
@@ -555,6 +621,8 @@ PENDING → CANCELLED
 6. 静态类型检查器：验证公共接口和泛型设计。
 7. pytest-cov：发现没有被测试覆盖的分支。
 8. Hypothesis（可选）：为值对象和数据转换做性质测试。
+9. HTTPX：统一同步/异步客户端，并通过 transport 做无网络测试。
+10. Uvicorn + FastAPI：在理解原生 ASGI 后实现类型驱动的 HTTP API。
 
 一次只引入一个工具，必须先能解释它解决的问题，再把它加入项目配置。
 

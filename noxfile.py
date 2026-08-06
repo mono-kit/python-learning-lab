@@ -17,8 +17,12 @@ COURSE_PATHS = [
     "src/python_learning_lab/advanced",
     "src/python_learning_lab/engineering",
     "src/python_learning_lab/task_queue",
+    "src/python_learning_lab/web",
     "tests/test_advanced_lessons.py",
     "tests/test_engineering_lessons.py",
+    "tests/test_network_protocol_lessons.py",
+    "tests/test_web_client_lessons.py",
+    "tests/test_web_api.py",
     "noxfile.py",
 ]
 
@@ -39,13 +43,14 @@ def lint(session: nox.Session) -> None:
 def typing(session: nox.Session) -> None:
     """严格检查高级语言和工程示例的公共类型边界。"""
 
-    session.install("-e", ".", "mypy>=1.11")
+    session.install("-e", ".[web]", "mypy>=1.11")
     session.run(
         "mypy",
         "--strict",
         "src/python_learning_lab/advanced",
         "src/python_learning_lab/engineering",
         "src/python_learning_lab/task_queue",
+        "src/python_learning_lab/web",
     )
 
 
@@ -53,7 +58,7 @@ def typing(session: nox.Session) -> None:
 def tests(session: nox.Session) -> None:
     """在项目声明支持的 Python 版本中运行回归测试。"""
 
-    session.install("-e", ".[dev]")
+    session.install("-e", ".[dev,web]")
     session.run("pytest", *session.posargs)
 
 
@@ -63,7 +68,7 @@ def exercise(session: nox.Session) -> None:
 
     if not session.posargs:
         session.error("请在 -- 后指定一个 learning_tests/test_*.py 文件")
-    session.install("-e", ".[dev]")
+    session.install("-e", ".[dev,web]")
     session.run("pytest", *session.posargs)
 
 

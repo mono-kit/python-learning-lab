@@ -34,6 +34,11 @@ class TaskService:
     def list(self) -> Sequence[Task]:
         return self.repository.list()
 
+    def get(self, task_id: str) -> Task:
+        """查询单个任务；入口适配器不应直接绕过服务访问仓库。"""
+
+        return self._get(task_id)
+
     def start(self, task_id: str) -> Task:
         return self._update(task_id, lambda task: task.start())
 

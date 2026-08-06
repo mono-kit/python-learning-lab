@@ -225,11 +225,96 @@ python -m python_learning_lab.advanced.performance
 每完成一个纵向功能就运行测试，例如先实现“添加并列出”，再实现“执行成功”，
 随后加入失败、重试、取消和超时。不要先建立所有目录再一次性填满。
 
+## 第 21 章：HTTP 语义与标准库
+
+完整讲义：[`http-and-asgi.md`](http-and-asgi.md)
+
+```bash
+python -m python_learning_lab.web.http_stdlib
+pytest learning_tests/test_21_http_stdlib.py
+```
+
+学习重点：
+
+- 请求/响应中的 method、target、status、headers 和 body。
+- JSON 是 body 的表示格式，不等于 HTTP 本身。
+- `urllib.request` 如何构造请求，以及 `HTTPError` 与 `URLError` 的边界。
+- `BaseHTTPRequestHandler` 如何从字节流读取 body 并写回完整响应。
+- 本机随机端口、服务器线程和 socket 的可靠清理。
+
+复习问题：为什么 404 有 status、headers 和 body，而 DNS 失败没有 HTTP response？
+
+## 第 22 章：同步 HTTP 客户端
+
+```bash
+pytest learning_tests/test_22_http_clients.py
+```
+
+比较 Requests、urllib3 和 HTTPX，实践使用注入的 `httpx.Client` 实现 JSON 客户端。
+重点是 Client/Session 的连接池和生命周期，不是在每个方法里临时创建客户端。
+
+复习问题：为什么接收外部 Client 的适配器通常不应该擅自关闭它？
+
+## 第 23 章：异步 HTTP 与流式响应
+
+```bash
+pytest learning_tests/test_23_async_http.py
+```
+
+使用 AsyncClient、Semaphore 与 TaskGroup 实现有界并发，分别表示 HTTP status、timeout、
+transport 和 JSON 失败；再用 `async with client.stream(...)` 与 `async for` 分块处理 body。
+
+复习问题：为什么 async 客户端不应在热循环中为每个 URL 创建一次？
+
+## 第 24 章：HTTP 可靠性工程
+
+```bash
+pytest learning_tests/test_24_http_resilience.py
+```
+
+把 timeout 拆成 pool/connect/write/read/deadline，把重试限制在明确的方法、状态、尝试次数
+和总预算内。学习指数退避、jitter、`Retry-After`、幂等键、TLS、SSRF 与日志脱敏。
+
+复习问题：服务器已经处理 POST、但响应途中丢失时，客户端盲目重试会造成什么后果？
+
+## 第 25 章：WSGI、ASGI 与原生应用
+
+讲解代码：`src/python_learning_lab/web/asgi_protocol.py`
+
+```bash
+pytest learning_tests/test_25_asgi_protocol.py
+```
+
+学习重点：
+
+- WSGI 的同步 request/response 与 ASGI 的异步连接事件模型。
+- `scope` 保存元数据，请求 body 由多个 `http.request` 事件传入。
+- `http.response.start` 和一个或多个 `http.response.body`。
+- middleware 如何包裹 app/receive/send，为什么请求状态必须是局部变量。
+- lifespan 与 WebSocket 的事件顺序和生命周期。
+
+复习问题：为什么 ASGI 请求体要通过 receive 事件流入，而不是一次放进 scope？
+
+## 第 26 章：ASGI 服务工程
+
+讲解代码：`src/python_learning_lab/web/service_api.py`
+
+```bash
+pytest learning_tests/test_26_task_api.py
+uv run --extra web uvicorn python_learning_lab.web.service_api:app --reload
+```
+
+区分 Uvicorn/Hypercorn/Daphne 等 server 与 Starlette/FastAPI 等 framework。HTTP 层复用
+既有 TaskService，只负责 Pydantic 边界、路由和领域异常到状态码的映射；测试通过 HTTPX
+ASGITransport 直接调用应用，不启动真实网络。
+
+复习问题：把仓库查询直接写进 FastAPI 路由，会破坏第 17 章建立的哪条依赖方向？
+
 ## 工程命令速查
 
 ```bash
 # 当前项目环境与测试
-uv sync --extra dev
+uv sync --extra dev --extra web
 uv run pytest
 
 # 单章练习
@@ -247,4 +332,9 @@ uvx nox --list
 uvx nox -s tests-3.11
 uvx nox -s exercise -- learning_tests/test_10_data_model.py
 uvx nox -s build package_smoke
+
+# HTTP 与 ASGI
+uv run python -m python_learning_lab.web.http_stdlib
+uv run pytest learning_tests/test_25_asgi_protocol.py
+uv run --extra web uvicorn python_learning_lab.web.service_api:app --reload
 ```

@@ -12,6 +12,7 @@
 - 学会用类型标注和 pytest 验证程序行为
 - 深入数据模型、描述器、泛型、流式处理、结构化并发和性能诊断
 - 掌握架构边界、SQLite 事务、模块、打包、uv、Nox 与发布验证
+- 掌握标准库 HTTP、现代客户端、可靠性边界、ASGI 协议与 Web API 工程
 
 ## 环境准备
 
@@ -22,7 +23,7 @@ git clone https://github.com/mono-kit/python-learning-lab.git
 cd python-learning-lab
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev,web]'
 ```
 
 运行课程演示：
@@ -31,6 +32,7 @@ python -m pip install -e '.[dev]'
 python -m python_learning_lab
 python -m python_learning_lab.pydantic_lab.main
 python -m python_learning_lab.advanced.data_model
+python -m python_learning_lab.web.http_stdlib
 ```
 
 运行测试：
@@ -42,7 +44,7 @@ pytest
 高级阶段使用 uv 和 Nox：
 
 ```bash
-uv sync --extra dev
+uv sync --extra dev --extra web
 uv run pytest
 uvx nox --list
 ```
@@ -64,6 +66,9 @@ uvx nox --list
 | 15～18 | `engineering/` | 测试、模块打包、架构、日志和 SQLite |
 | 19 | `advanced/performance.py` | 性能测量和诊断 |
 | 20 | `exercises/capstone/` | 本地任务队列综合项目 |
+| 21～24 | `web/http_stdlib.py`、`web/http_clients.py` | HTTP、标准库、同步/异步客户端与可靠性 |
+| 25 | `web/asgi_protocol.py` | WSGI 对比、原生 ASGI、middleware 与 lifespan |
+| 26 | `web/service_api.py` | FastAPI、Uvicorn 与任务服务 HTTP 适配器 |
 
 推荐学习方法：先运行一个文件；逐行阅读；修改输入预测结果；完成对应练习；最后运行测试。
 
@@ -83,4 +88,5 @@ docs/                       学习路线和 Pydantic 讲义
 [`docs/advanced-course.md`](docs/advanced-course.md)，高级阶段复习见
 [`docs/advanced-review.md`](docs/advanced-review.md)，模块、打包、发包与工具生态见
 [`docs/packaging.md`](docs/packaging.md)，Pydantic 专题见
-[`docs/pydantic.md`](docs/pydantic.md)。
+[`docs/pydantic.md`](docs/pydantic.md)，HTTP 客户端、服务端与 ASGI 专题见
+[`docs/http-and-asgi.md`](docs/http-and-asgi.md)。

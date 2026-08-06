@@ -50,3 +50,16 @@ Python 数据模型、描述器、MRO 和高级类型标注出发，继续学习
 并发控制、测试分层、模块与导入系统、打包与发布、uv、Nox 和工具生态、
 应用架构、SQLite、性能诊断，并最终完成一个本地任务队列综合项目。打包专题详见
 [`packaging.md`](packaging.md)。
+
+## 第七阶段：HTTP 与 ASGI 网络编程
+
+完成 [`http-and-asgi.md`](http-and-asgi.md) 的第 21～26 章。从 HTTP 消息和标准库
+客户端/服务端开始，再学习同步与异步客户端、timeout、重试和流式传输，最后手写
+ASGI 应用并用 FastAPI/Uvicorn 把已有任务服务暴露为 HTTP API。
+
+完成后应能解释：
+
+- HTTP status failure 与 transport failure 为什么不是一回事
+- 连接池、timeout、并发上限、流式响应和客户端生命周期
+- ASGI 的 `scope`、`receive`、`send` 与事件顺序
+- server、framework、application 和 middleware 的职责边界
