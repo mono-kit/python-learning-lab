@@ -4,7 +4,7 @@
 测试位于 [`lessons/`](../lessons/README.md)，准确进度以 [`course.toml`](../course.toml)
 为准。
 
-当前已完成第 1～14 章，下一课是第 15 章“深入 pytest”。
+当前已完成第 1～15 章，下一课是第 16 章“模块、打包、发布与工具”。
 
 | 章节 | 快速复习 |
 |---|---|
@@ -22,5 +22,6 @@
 | 12 | [`12_typing.md`](12_typing.md) |
 | 13 | [`13_streaming.md`](13_streaming.md) |
 | 14 | [`14_concurrency.md`](14_concurrency.md) |
+| 15 | [`15_testing.md`](15_testing.md) |
 
 每学完一章并通过验收后，再新增对应 review；未完成章节不提前生成总结。

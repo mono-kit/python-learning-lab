@@ -1,8 +1,8 @@
 schema_version = 2
 
 [progress]
-completed_through = 14
-next_chapter = 15
+completed_through = 15
+next_chapter = 16
 reviews = "reviews"
 
 [[chapters]]
@@ -178,6 +178,7 @@ number = 15
 title = "深入 pytest"
 kind = "test-workshop"
 courseware = "lessons/15_testing/lesson.md"
+review = "reviews/15_testing.md"
 example = "lessons/15_testing/example.py"
 exercise = "lessons/15_testing/exercise.md"
 test = "lessons/15_testing/test_lesson.py"
