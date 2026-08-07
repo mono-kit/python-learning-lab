@@ -2,14 +2,16 @@
 
 运行：``pytest lessons/15_testing/test_lesson.py``
 
-不要修改 ``testing_lab.py`` 或 ``concurrency.py`` 来迎合测试。逐个完成下面的 TODO，
-让每个测试只描述一条规则，并保证测试不依赖真实时间、固定磁盘路径或长时间 sleep。
+不要修改 ``testing_lab.py`` 或 ``concurrency.py`` 来迎合测试。每个测试只描述一条规则，
+并保证测试不依赖真实时间、固定磁盘路径或长时间 sleep。
 """
 
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+import json
+import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -30,21 +32,20 @@ export_records = testing_lab["export_records"]
 
 @pytest.fixture
 def fixed_now() -> datetime:
-    # TODO: 返回一个带 UTC 时区的固定 datetime。
-    raise NotImplementedError
+    """提供不依赖真实时间的 UTC 时间。"""
+    return datetime(2026, 8, 7, 9, 30, tzinfo=UTC)
 
 
 @pytest.fixture
 def memory_sink() -> MemoryAuditSink:
-    # TODO: 返回保存可查询状态的 fake。
-    raise NotImplementedError
+    """为每个测试提供独立、可查询状态的 fake。"""
+    return MemoryAuditSink()
 
 
 @pytest.fixture
 def audit_service(fixed_now: datetime, memory_sink: MemoryAuditSink) -> AuditService:
-    # TODO: 组合 FrozenClock、MemoryAuditSink 和 AuditService。
-    _ = FrozenClock
-    raise NotImplementedError
+    """组合共享的固定时钟与内存 sink。"""
+    return AuditService(clock=FrozenClock(fixed_now), sink=memory_sink)
 
 
 def test_service_records_normalized_action_in_fake(
@@ -52,52 +53,79 @@ def test_service_records_normalized_action_in_fake(
     memory_sink: MemoryAuditSink,
     fixed_now: datetime,
 ) -> None:
-    # TODO: 验证返回值、去除首尾空白、固定时间以及 fake 中保存的状态。
-    raise NotImplementedError
+    record = audit_service.record("  deploy  ")
+    assert record.action == "deploy"
+    assert record.occurred_at == fixed_now
+    assert memory_sink.records == [record]
 
 
 @pytest.mark.parametrize("action", ["", "   ", "\n\t"], ids=["empty", "spaces", "newline"])
 def test_service_rejects_blank_actions(audit_service: AuditService, action: str) -> None:
-    # TODO: 使用 pytest.raises 验证每个无效输入。
-    raise NotImplementedError
+    with pytest.raises(ValueError, match="action 不能为空"):
+        audit_service.record(action)
 
 
 def test_export_records_uses_a_temporary_path(
     tmp_path: Path,
     audit_service: AuditService,
 ) -> None:
-    # TODO: 写入 tmp_path 下的 JSONL 文件，并解析内容验证字段，而非比较整段字符串。
-    _ = export_records
-    raise NotImplementedError
+    path = tmp_path / "audit.jsonl"
+    record = audit_service.record("发布")
+    export_records(path, [record])
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload == {
+        "action": "发布",
+        "occurred_at": record.occurred_at.isoformat(),
+    }
 
 
 def test_channel_can_be_controlled_at_the_environment_boundary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # TODO: 用 monkeypatch 设置 AUDIT_CHANNEL，验证 audit_channel()，不要直接改 os.environ。
-    _ = audit_channel
-    raise NotImplementedError
+    monkeypatch.setenv("AUDIT_CHANNEL", "ci")
+    assert audit_channel() == "ci"
 
 
 def test_service_emits_a_structured_log_event(
     caplog: pytest.LogCaptureFixture,
     fixed_now: datetime,
 ) -> None:
-    # TODO: 捕获 INFO 日志，只验证事件名和 action 字段，不断言时间戳或整行格式。
-    raise NotImplementedError
+    caplog.set_level(logging.INFO)
+    AuditService(FrozenClock(fixed_now)).record("deploy")
+
+    record = next(item for item in caplog.records if item.message == "audit_recorded")
+
+    assert record.action == "deploy"
 
 
 def test_service_calls_sink_using_a_spec_mock(fixed_now: datetime) -> None:
-    # TODO: 创建 Mock(spec=AuditSink)，注入服务并用调用断言验证边界交互。
-    # 保留这行类型提示，避免把一个没有 save() 的任意 mock 当成有效依赖。
     sink = Mock(spec=AuditSink)
-    _ = sink
-    raise NotImplementedError
+    service = AuditService(FrozenClock(fixed_now), sink)
+    record = service.record("deploy")
+    sink.save.assert_called_once_with(record)
 
 
 async def test_cancelling_executor_waits_for_worker_cleanup() -> None:
-    # TODO: 使用 asyncio.Event 协调 started/cleanup；取消 run_limited 的外层任务，
-    # 验证 CancelledError 继续传播，且 worker 的 finally 已经执行。不要用长时间 sleep。
-    _ = asyncio.Event
-    _ = run_limited
-    raise NotImplementedError
+    started = asyncio.Event()
+    cleanup_finished = asyncio.Event()
+    release = asyncio.Event()
+
+    async def worker(value: int) -> int:
+        started.set()
+        try:
+            await release.wait()
+            return value
+        finally:
+            cleanup_finished.set()
+
+    execution = asyncio.create_task(run_limited([1], worker, max_concurrency=1))
+
+    await asyncio.wait_for(started.wait(), timeout=1)
+
+    execution.cancel()
+
+    with pytest.raises(asyncio.CancelledError):
+        await execution
+
+    assert cleanup_finished.is_set()
