@@ -15,6 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+web = [
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "uvicorn>=0.35,<1",
+]
 dev = [
   "build>=1.2,<2",
   "mypy>=1.11,<2",
@@ -32,19 +37,21 @@ python-learning-lab = "python_learning_lab.__main__:main"
 Repository = "https://github.com/mono-kit/python-learning-lab"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["lessons/16_packaging/example_project/src"]
 
 [tool.setuptools.package-data]
 "python_learning_lab.advanced.imports_lab" = ["resources/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+pythonpath = [".", "lessons/16_packaging/example_project/src"]
+addopts = "-q --import-mode=importlib"
 asyncio_mode = "auto"
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+extend-exclude = ["lessons/**/*.md", "reviews/**/*.md"]
 
 [tool.mypy]
 python_version = "3.11"

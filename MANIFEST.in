@@ -1,0 +1,6 @@
+include AGENTS.md
+include course.toml
+include noxfile.py
+include uv.lock
+recursive-include lessons *.md *.py *.txt *.toml
+recursive-include reviews *.md
