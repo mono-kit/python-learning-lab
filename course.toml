@@ -1,0 +1,306 @@
+schema_version = 2
+
+[progress]
+completed_through = 14
+next_chapter = 15
+reviews = "reviews"
+
+[[chapters]]
+number = 1
+title = "基础语法"
+kind = "guided"
+courseware = "lessons/01_basics/lesson.md"
+review = "reviews/01_basics.md"
+example = "lessons/01_basics/example.py"
+exercise = "lessons/01_basics/exercise.py"
+test = "lessons/01_basics/test_lesson.py"
+solution = "lessons/01_basics/exercise.py"
+command = "uv run pytest lessons/01_basics/test_lesson.py"
+
+[[chapters]]
+number = 2
+title = "Python 容器"
+kind = "guided"
+courseware = "lessons/02_collections/lesson.md"
+review = "reviews/02_collections.md"
+example = "lessons/02_collections/example.py"
+exercise = "lessons/02_collections/exercise.py"
+test = "lessons/02_collections/test_lesson.py"
+solution = "lessons/02_collections/exercise.py"
+command = "uv run pytest lessons/02_collections/test_lesson.py"
+
+[[chapters]]
+number = 3
+title = "函数"
+kind = "guided"
+courseware = "lessons/03_functions/lesson.md"
+review = "reviews/03_functions.md"
+example = "lessons/03_functions/example.py"
+exercise = "lessons/03_functions/exercise.py"
+test = "lessons/03_functions/test_lesson.py"
+solution = "lessons/03_functions/exercise.py"
+command = "uv run pytest lessons/03_functions/test_lesson.py"
+
+[[chapters]]
+number = 4
+title = "面向对象"
+kind = "guided"
+courseware = "lessons/04_oop/lesson.md"
+review = "reviews/04_oop.md"
+example = "lessons/04_oop/example.py"
+exercise = "lessons/04_oop/exercise.py"
+test = "lessons/04_oop/test_lesson.py"
+solution = "lessons/04_oop/exercise.py"
+command = "uv run pytest lessons/04_oop/test_lesson.py"
+
+[[chapters]]
+number = 5
+title = "异常与上下文管理器"
+kind = "guided"
+courseware = "lessons/05_errors/lesson.md"
+review = "reviews/05_errors.md"
+example = "lessons/05_errors/exercise.py"
+exercise = "lessons/05_errors/exercise.py"
+test = "lessons/05_errors/test_lesson.py"
+solution = "lessons/05_errors/exercise.py"
+command = "uv run pytest lessons/05_errors/test_lesson.py"
+
+[[chapters]]
+number = 6
+title = "迭代器与生成器"
+kind = "guided"
+courseware = "lessons/06_iterators/lesson.md"
+review = "reviews/06_iterators.md"
+example = "lessons/06_iterators/exercise.py"
+exercise = "lessons/06_iterators/exercise.py"
+test = "lessons/06_iterators/test_lesson.py"
+solution = "lessons/06_iterators/exercise.py"
+command = "uv run pytest lessons/06_iterators/test_lesson.py"
+
+[[chapters]]
+number = 7
+title = "异步编程入门"
+kind = "guided"
+courseware = "lessons/07_async/lesson.md"
+review = "reviews/07_async.md"
+example = "lessons/07_async/example.py"
+exercise = "lessons/07_async/exercise.py"
+test = "lessons/07_async/test_lesson.py"
+solution = "lessons/07_async/exercise.py"
+command = "uv run pytest lessons/07_async/test_lesson.py"
+
+[[chapters]]
+number = 8
+title = "常用标准库"
+kind = "guided"
+courseware = "lessons/08_stdlib/lesson.md"
+review = "reviews/08_stdlib.md"
+example = "lessons/08_stdlib/exercise.py"
+exercise = "lessons/08_stdlib/exercise.py"
+test = "lessons/08_stdlib/test_lesson.py"
+solution = "lessons/08_stdlib/exercise.py"
+command = "uv run pytest lessons/08_stdlib/test_lesson.py"
+
+[[chapters]]
+number = 9
+title = "Pydantic 2"
+kind = "guided"
+courseware = "lessons/09_pydantic/lesson.md"
+review = "reviews/09_pydantic.md"
+example = "lessons/09_pydantic/example/package"
+exercise = "lessons/09_pydantic/exercise.py"
+test = "lessons/09_pydantic/test_lesson.py"
+solution = "lessons/09_pydantic/exercise.py"
+command = "uv run pytest lessons/09_pydantic/test_lesson.py"
+
+[[chapters]]
+number = 10
+title = "数据模型"
+kind = "workshop"
+courseware = "lessons/10_data_model/lesson.md"
+review = "reviews/10_data_model.md"
+example = "lessons/10_data_model/example.py"
+exercise = "lessons/10_data_model/exercise.py"
+test = "lessons/10_data_model/test_lesson.py"
+solution = "lessons/10_data_model/exercise.py"
+command = "uv run pytest lessons/10_data_model/test_lesson.py"
+
+[[chapters]]
+number = 11
+title = "属性协议、描述器与 MRO"
+kind = "workshop"
+courseware = "lessons/11_descriptors/lesson.md"
+review = "reviews/11_descriptors.md"
+example = "lessons/11_descriptors/example.py"
+exercise = "lessons/11_descriptors/exercise.py"
+test = "lessons/11_descriptors/test_lesson.py"
+solution = "lessons/11_descriptors/exercise.py"
+command = "uv run pytest lessons/11_descriptors/test_lesson.py"
+
+[[chapters]]
+number = 12
+title = "高级类型标注"
+kind = "workshop"
+courseware = "lessons/12_typing/lesson.md"
+review = "reviews/12_typing.md"
+example = "lessons/12_typing/example.py"
+exercise = "lessons/12_typing/exercise.py"
+test = "lessons/12_typing/test_lesson.py"
+solution = "lessons/12_typing/exercise.py"
+command = "uv run pytest lessons/12_typing/test_lesson.py"
+
+[[chapters]]
+number = 13
+title = "流式处理与资源管理"
+kind = "workshop"
+courseware = "lessons/13_streaming/lesson.md"
+review = "reviews/13_streaming.md"
+example = "lessons/13_streaming/example.py"
+exercise = "lessons/13_streaming/exercise.py"
+test = "lessons/13_streaming/test_lesson.py"
+solution = "lessons/13_streaming/exercise.py"
+command = "uv run pytest lessons/13_streaming/test_lesson.py"
+
+[[chapters]]
+number = 14
+title = "深入 asyncio"
+kind = "workshop"
+courseware = "lessons/14_concurrency/lesson.md"
+review = "reviews/14_concurrency.md"
+example = "lessons/14_concurrency/example.py"
+exercise = "lessons/14_concurrency/exercise.py"
+test = "lessons/14_concurrency/test_lesson.py"
+solution = "lessons/14_concurrency/exercise.py"
+command = "uv run pytest lessons/14_concurrency/test_lesson.py"
+
+[[chapters]]
+number = 15
+title = "深入 pytest"
+kind = "test-workshop"
+courseware = "lessons/15_testing/lesson.md"
+example = "lessons/15_testing/example.py"
+exercise = "lessons/15_testing/exercise.md"
+test = "lessons/15_testing/test_lesson.py"
+solution = "lessons/15_testing/reference_test.py"
+command = "uv run pytest lessons/15_testing/test_lesson.py"
+
+[[chapters]]
+number = 16
+title = "模块、打包、发布与工具"
+kind = "workshop"
+courseware = "lessons/16_packaging/lesson.md"
+example = "lessons/16_packaging/example_project"
+exercise = "lessons/16_packaging/exercise.py"
+test = "lessons/16_packaging/test_lesson.py"
+solution = "lessons/16_packaging/example_project/src/python_learning_lab/advanced/imports_lab/inspection.py"
+command = "uv run pytest lessons/16_packaging/test_lesson.py"
+
+[[chapters]]
+number = 17
+title = "架构与可观测性"
+kind = "workshop"
+courseware = "lessons/17_architecture/lesson.md"
+example = "lessons/_shared/task_queue/domain.py"
+exercise = "lessons/17_architecture/exercise.py"
+test = "lessons/17_architecture/test_lesson.py"
+solution = "lessons/_shared/task_queue/domain.py"
+command = "uv run pytest lessons/17_architecture/test_lesson.py"
+
+[[chapters]]
+number = 18
+title = "SQLite 与事务"
+kind = "workshop"
+courseware = "lessons/18_sqlite/lesson.md"
+example = "lessons/_shared/task_queue/storage.py"
+exercise = "lessons/18_sqlite/exercise.py"
+test = "lessons/18_sqlite/test_lesson.py"
+solution = "lessons/18_sqlite/solution.py"
+command = "uv run pytest lessons/18_sqlite/test_lesson.py"
+
+[[chapters]]
+number = 19
+title = "性能与诊断"
+kind = "experiment"
+courseware = "lessons/19_performance/lesson.md"
+example = "lessons/19_performance/example.py"
+exercise = "lessons/19_performance/exercise.py"
+test = "lessons/19_performance/test_lesson.py"
+solution = "lessons/19_performance/example.py"
+command = "uv run pytest lessons/19_performance/test_lesson.py"
+
+[[chapters]]
+number = 20
+title = "本地任务队列综合项目"
+kind = "capstone"
+courseware = "lessons/20_task_queue/lesson.md"
+example = "lessons/_shared/task_queue"
+exercise = "lessons/20_task_queue/exercise.md"
+test = "lessons/20_task_queue/tests"
+solution_policy = "综合项目不提供可照抄的完整答案；使用分阶段验收测试。"
+command = "uv run pytest lessons/20_task_queue/tests"
+
+[[chapters]]
+number = 21
+title = "HTTP 语义与标准库"
+kind = "workshop"
+courseware = "lessons/21_http_stdlib/lesson.md"
+example = "lessons/21_http_stdlib/example.py"
+exercise = "lessons/21_http_stdlib/exercise.py"
+test = "lessons/21_http_stdlib/test_lesson.py"
+solution = "lessons/21_http_stdlib/example.py"
+command = "uv run pytest lessons/21_http_stdlib/test_lesson.py"
+
+[[chapters]]
+number = 22
+title = "同步 HTTP 客户端"
+kind = "workshop"
+courseware = "lessons/22_http_clients/lesson.md"
+example = "lessons/22_http_clients/example.py"
+exercise = "lessons/22_http_clients/exercise.py"
+test = "lessons/22_http_clients/test_lesson.py"
+solution = "lessons/22_http_clients/example.py"
+command = "uv run pytest lessons/22_http_clients/test_lesson.py"
+
+[[chapters]]
+number = 23
+title = "异步 HTTP 与流式响应"
+kind = "workshop"
+courseware = "lessons/23_async_http/lesson.md"
+example = "lessons/23_async_http/example.py"
+exercise = "lessons/23_async_http/exercise.py"
+test = "lessons/23_async_http/test_lesson.py"
+solution = "lessons/23_async_http/example.py"
+command = "uv run pytest lessons/23_async_http/test_lesson.py"
+
+[[chapters]]
+number = 24
+title = "HTTP 可靠性工程"
+kind = "workshop"
+courseware = "lessons/24_http_resilience/lesson.md"
+example = "lessons/24_http_resilience/example.py"
+exercise = "lessons/24_http_resilience/exercise.py"
+test = "lessons/24_http_resilience/test_lesson.py"
+solution = "lessons/24_http_resilience/example.py"
+command = "uv run pytest lessons/24_http_resilience/test_lesson.py"
+
+[[chapters]]
+number = 25
+title = "WSGI、ASGI 与原生应用"
+kind = "workshop"
+courseware = "lessons/25_asgi_protocol/lesson.md"
+example = "lessons/25_asgi_protocol/example.py"
+exercise = "lessons/25_asgi_protocol/exercise.py"
+test = "lessons/25_asgi_protocol/test_lesson.py"
+solution = "lessons/25_asgi_protocol/example.py"
+command = "uv run pytest lessons/25_asgi_protocol/test_lesson.py"
+
+[[chapters]]
+number = 26
+title = "ASGI 服务工程"
+kind = "workshop"
+courseware = "lessons/26_asgi_service/lesson.md"
+example = "lessons/26_asgi_service/example.py"
+exercise = "lessons/26_asgi_service/exercise.py"
+test = "lessons/26_asgi_service/test_lesson.py"
+solution = "lessons/26_asgi_service/example.py"
+command = "uv run pytest lessons/26_asgi_service/test_lesson.py"

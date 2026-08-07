@@ -1,0 +1,29 @@
+# 第 19 章练习：写一份有证据的优化报告
+
+先完成 `19_performance.py` 中的 `benchmark()`、`profile_text()` 和
+`measure_peak_memory()`：
+
+```bash
+uv run pytest lessons/19_performance/test_lesson.py
+```
+
+测试只验收测量工具的语义，不比较易波动的速度阈值。通过后再开始实验。
+
+选择 `validated_batches` 或一个大文件词频程序，先建立可重复基线，再修改实现。
+
+报告必须包含：
+
+```text
+问题与假设：
+Python 版本和机器：
+输入规模与生成方式：
+timeit 结果：
+cProfile 累计时间热点：
+tracemalloc 峰值：
+修改内容：
+修改后结果：
+时间/内存/可读性取舍：
+```
+
+至少做一次“看起来会更快但测量后没有收益”的实验并保留结论。练习目标是诊断，
+不是必须让每个数字都下降。
