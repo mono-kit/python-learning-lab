@@ -202,6 +202,107 @@ version("python-learning-lab")
 3. 制造并修复一个循环导入。
 4. 把模板文件放入包内，并在 wheel 安装后通过 `importlib.resources` 读取。
 
+### 第一阶段复盘：导入观察器
+
+本阶段完成 `exercise.py` 中的四个边界函数，建立模块、import package 和已安装
+distribution 之间的连接。
+
+#### 从 import 语句到模块对象
+
+模块是运行时对象，不只是一个 `.py` 文件。解释器执行 import 时，先检查完整模块名是否
+已存在于 `sys.modules`；未命中时才查找 spec、创建模块对象并执行顶层代码，成功后继续
+复用该对象：
+
+```text
+import 语句
+  → sys.modules 缓存
+  → 查找 ModuleSpec
+  → 创建 module 对象
+  → 执行模块顶层代码
+  → 在当前作用域绑定名称
+```
+
+动态模块名必须使用标准库函数：
+
+```python
+from importlib import import_module
+
+module = import_module("python_learning_lab.advanced.imports_lab")
+```
+
+`module.__name__` 是完整模块名，`module.__package__` 是相对导入所需的包上下文；
+`module.__file__` 可能不存在，`module.__spec__` 也可能是 `None`，因此通用观察代码需要
+显式处理这些边界：
+
+```python
+spec = module.__spec__
+facts = {
+    "__file__": getattr(module, "__file__", None),
+    "spec_name": spec.name if spec is not None else None,
+    "origin": spec.origin if spec is not None else None,
+}
+```
+
+连续两次 `import_module(name)` 后使用 `first is second`，可以证明正常重复导入复用了同一
+对象；它不表示模块永远不会重跑，因为 `importlib.reload()` 或删除缓存会改变这一条件。
+
+#### 可复用函数与手动观察入口
+
+函数契约要求返回字典时，只打印而没有 `return` 会隐式返回 `None`。可复用函数负责收集
+数据，直接运行文件时的展示逻辑放在入口保护中：
+
+```python
+if __name__ == "__main__":
+    for key, value in module_facts("json").items():
+        print(f"{key}: {value}")
+```
+
+直接执行文件时 `__name__ == "__main__"`；测试通过 `runpy.run_path()` 加载练习时不满足
+该条件，因此不会产生手动展示输出。
+
+#### 包内资源不依赖当前工作目录
+
+`Path("resources/welcome.txt")` 相对于 `Path.cwd()`，程序从其他目录启动或安装 wheel 后
+就可能失效。`importlib.resources.files()` 先通过 import 系统定位 package，再返回实现
+`Traversable` 协议的资源根：
+
+```python
+from importlib.resources import files
+
+resource = files(package).joinpath(relative_path)
+text = resource.read_text(encoding="utf-8").strip()
+```
+
+`read_text()` 已经完成打开、读取和关闭并直接返回 `str`，不能再把结果放进 `with`。
+需要上下文管理器时应调用 `resource.open(...)`；`open_text` 不是资源对象的方法。
+
+#### distribution 元数据不是模块变量
+
+版本是 distribution 的标准安装元数据。源码中的 `package.__version__` 只是可选约定，
+可能不存在或与实际安装产物漂移；应使用 distribution 名称查询当前环境：
+
+```python
+from importlib.metadata import version
+
+installed_version = version("python-learning-lab")
+```
+
+这里的 distribution 名称 `python-learning-lab` 与 import package 名称
+`python_learning_lab` 属于不同命名空间，也不保证一一对应。找不到已安装 distribution
+时，`version()` 会抛出 `PackageNotFoundError`。
+
+#### 第一阶段快速自测
+
+1. 为什么 `first is second` 比比较模块路径更能证明缓存复用？
+2. `__name__` 与 `__package__` 分别描述什么？
+3. 为什么读取通用模块信息时要防守 `__file__` 和 `__spec__` 缺失？
+4. `read_text()` 与 `open()` 的返回对象和资源管理方式有什么区别？
+5. 为什么包内资源不能依赖 `Path.cwd()`？
+6. 为什么查询安装版本要传 distribution 名称，而不是 import package 名称？
+
+本阶段测试通过只表示导入观察器练习完成。第 16 章的下一阶段是项目布局与可运行包；整章
+仍未完成，因此不创建第 16 章 review，也不推进 `course.toml` 中的正式进度。
+
 ## 3. 项目布局
 
 ### 脚本项目、应用和库

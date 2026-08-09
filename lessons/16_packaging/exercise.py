@@ -6,30 +6,48 @@
 
 from __future__ import annotations
 
+from importlib import import_module
+from importlib.metadata import version
+from importlib.resources import files
+
 
 def module_facts(module_name: str) -> dict[str, str | None]:
     """返回 __name__、__package__、__file__、spec_name 和 origin。"""
 
-    # TODO: 使用 importlib 导入模块，并从模块对象及其 __spec__ 提取信息。
-    raise NotImplementedError
+    module = import_module(module_name)
+    spec = module.__spec__
+
+    return {
+        "__name__": module.__name__,
+        "__package__": module.__package__,
+        "__file__": getattr(module, "__file__", None),
+        "spec_name": spec.name if spec is not None else None,
+        "origin": spec.origin if spec is not None else None,
+    }
 
 
 def import_is_cached(module_name: str) -> bool:
     """判断连续两次导入是否得到同一个模块对象。"""
 
-    # TODO: 不要比较模块名称或文件路径，直接比较两次导入得到的对象身份。
-    raise NotImplementedError
+    module_a = import_module(module_name)
+    module_b = import_module(module_name)
+    return module_a is module_b
 
 
 def read_resource_text(package: str, relative_path: str) -> str:
     """以 UTF-8 读取包内文本资源并去除首尾空白。"""
 
-    # TODO: 使用 importlib.resources；不能从 Path.cwd() 拼接源码路径。
-    raise NotImplementedError
+    resource = files(package).joinpath(relative_path)
+    return resource.read_text(encoding="utf-8").strip()
 
 
 def distribution_version(distribution_name: str) -> str:
     """返回已安装 distribution 的版本。"""
 
-    # TODO: 使用 importlib.metadata；注意 distribution 名称可能不同于导入包名。
-    raise NotImplementedError
+    return version(distribution_name)
+
+
+if __name__ == "__main__":
+    facts = module_facts("json")
+    for key, value in facts.items():
+        print(f"{key}: {value}")
