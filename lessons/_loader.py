@@ -29,7 +29,7 @@ def load_file(relative_path: str) -> dict[str, Any]:
     path = (ROOT / relative_path).resolve()
     if not path.is_relative_to(ROOT.resolve()):
         raise ValueError(f"路径必须位于仓库内：{relative_path}")
-    return run_path(path)
+    return run_path(str(path))
 
 
 def load_exercise(lesson: str) -> dict[str, Any]:
