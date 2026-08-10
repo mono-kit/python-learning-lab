@@ -755,6 +755,204 @@ Rye 官方已经停止开发，并建议迁移到同一维护团队的 uv。因�
 
 不再为新练习创建 Rye 项目，也不把 Rye 作为长期工具推荐。
 
+### 第三阶段复盘：版本约束、uv 状态链与 Rye 迁移
+
+本阶段把“允许安装什么版本”“实际锁定并安装了什么”以及“由哪个工具执行工程任务”
+连接起来，重点记录实际出现过的误区和当前仓库的特殊配置。
+
+#### PEP 440 按数字组件比较版本
+
+一个常见发布生命周期的顺序是：
+
+```text
+0.2.0.dev1
+< 0.2.0a1
+< 0.2.0b1
+< 0.2.0rc1
+< 0.2.0
+< 0.2.0.post1
+```
+
+版本组件按数字值比较，而不是把整个版本当成字符串或小数。本阶段重点纠正：
+
+```text
+2.9.0  → (2, 9, 0)
+2.10.0 → (2, 10, 0)
+
+2 == 2，随后 10 > 9
+所以 2.10.0 > 2.9.0
+```
+
+字符串比较可能得到相反结果，但依赖解析器使用版本语义。PEP 440 比较 release segment
+时会补零，因此 `0.2` 与 `0.2.0` 等价。范围 `>=0.2,<0.3` 中的逗号是逻辑 `and`：
+
+```text
+0.2.0.dev1  < 0.2，不满足下界
+0.2.0a1     < 0.2，不满足下界
+0.2.0b1     < 0.2，不满足下界
+0.2.0rc1    < 0.2，不满足下界
+0.2.0       = 0.2，满足
+0.2.0.post1 > 0.2 且 < 0.3，满足并且更新
+0.3.0       不满足上界
+```
+
+因此最新匹配版本是 `0.2.0.post1`。下界只负责筛选候选，不能直接当成安装结果。
+
+#### release 是版本，file 是该版本的产物
+
+一次 `0.2.0` release 可以同时包含一个 sdist 和多个平台 wheel：
+
+```text
+project 0.2.0 release
+├── project-0.2.0.tar.gz
+├── project-0.2.0-py3-none-any.whl
+├── project-0.2.0-cp313-...-macosx_....whl
+└── project-0.2.0-cp313-...-manylinux_....whl
+```
+
+这是一次 release、多个 file。PyPI（以及独立的 TestPyPI）不允许用不同内容覆盖已经使用
+过的文件名；即使删除文件，也不能把修复后的产物继续作为同名文件上传。漏资源等会改变
+wheel 运行行为的问题，应选择新的正常版本、清理并重新构建，再执行 wheel smoke test；
+不要默认用 `.postN` 代替正常修订版本。
+
+有问题的已发布版本通常优先考虑 yank：普通解析会避开它，同时历史文件仍然存在；删除
+则是破坏性且不可恢复的操作。
+
+#### uv 管理声明、解析、环境和执行之间的状态链
+
+uv 项目的核心状态流是：
+
+```text
+pyproject.toml
+声明允许的依赖范围
+    │ uv lock
+    ▼
+uv.lock
+保存解析出的精确版本、来源、哈希和条件
+    │ uv sync
+    ▼
+.venv
+保存当前机器实际安装的环境
+    │ uv run
+    ▼
+在项目环境中执行命令
+```
+
+四层不能混为一谈：锁文件里有某个包，不代表当前环境已经同步；环境里碰巧存在某个包，
+也不代表项目声明了它。`uv lock` 负责解析和锁定，`uv sync` 负责把锁定结果落实到环境，
+`uv run` 会在执行前检查项目状态并按需同步。
+
+当前仓库的 `pytest` 位于 optional extra `dev`，所以从干净环境运行测试时必须显式选择：
+
+```bash
+uv run --extra dev pytest
+uv run --locked --extra dev pytest  # CI：锁文件过期就失败
+```
+
+这是因为当前配置是：
+
+```toml
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9"]
+```
+
+这里的 `dev` 是发布元数据中的 optional extra，仅仅因为名字叫 `dev` 并不会由普通
+`uv sync` 自动选择。真正只服务仓库开发、并由 uv 默认同步的开发依赖应放在：
+
+```toml
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.9"]
+```
+
+`--locked` 要求 `uv.lock` 与项目声明一致，过期就失败而不是自动改锁文件；`--frozen`
+直接使用现有锁文件而不检查声明是否变化；`--no-sync` 跳过环境同步。三个开关解决不同
+问题，不能都理解成“运行得更快”。
+
+#### `uv run`、`uvx`、`uv add` 和 `uv build` 各有边界
+
+需要当前项目和锁定依赖的测试使用：
+
+```bash
+uv run --extra dev pytest
+uv run python-learning-lab
+```
+
+`uvx`（`uv tool run` 的简写）在独立工具环境运行 CLI，不保证安装当前项目。因此不能用
+裸 `uvx pytest` 代替上面的项目测试。下面的命令只读取并列出 Nox session，不创建 session
+环境：
+
+```bash
+uvx nox --list
+```
+
+真正运行时：
+
+```bash
+uvx nox -s package_smoke
+```
+
+uvx 只负责提供 Nox；Nox 此时才根据 `noxfile.py` 创建 session 环境并安装所需内容。
+
+正式增加项目依赖时使用 `uv add`，让 `pyproject.toml`、`uv.lock` 和项目环境一起更新。
+只在环境中执行 `uv pip install` 不会自动形成项目声明，之后的 exact sync 可能移除这种
+未声明状态。
+
+执行 `uv build` 也不意味着 uv 一定是构建后端。当前仓库的调用链是：
+
+```text
+uv build（构建前端）
+→ setuptools.build_meta（pyproject.toml 指定的构建后端）
+→ sdist / wheel
+```
+
+#### Rye 迁移的是行为，不是配置文本
+
+Rye 已停止开发，遗留项目迁移到 uv 时应先分类旧配置：
+
+```text
+[project] 标准字段
+→ 保留 Python 范围、运行依赖、名称和版本
+
+[tool.rye] 中的 dev-dependencies
+→ 迁入 [dependency-groups].dev
+
+供安装者使用的产品命令
+→ 迁入 [project.scripts] 的 module:function 入口点，并确保目标 callable 确实存在
+
+test 等开发任务
+→ uv run、Nox 或 CI；不要暴露成所有用户都会安装的 console script
+
+Rye 锁文件
+→ 不能只改名；根据标准依赖声明重新解析并生成 uv.lock
+```
+
+本章迁移示例还显式选择 Hatchling：
+
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
+
+此时 `uv build` 仍是前端，`hatchling.build` 才是后端。迁移验收应比较 Python 范围、运行
+与开发依赖、测试、产品 CLI 和 wheel 的安装后行为，不能只以 `uv sync` 没报错为标准。
+
+#### 第三阶段快速自测
+
+1. 为什么 `2.10.0` 大于 `2.9.0`？
+2. `>=0.2,<0.3` 在给定候选中为什么会选择 `0.2.0.post1`？
+3. 一次 release 和它包含的 sdist/wheel 文件是什么关系？
+4. 为什么已经上传的错误 wheel 不能用相同版本覆盖？
+5. `uv lock`、`uv sync` 与 `uv run` 分别改变或使用哪一层状态？
+6. 当前仓库为什么必须使用 `--extra dev` 才能从干净环境运行 pytest？
+7. 测试当前 `src/` 项目时，为什么应使用 `uv run --extra dev pytest` 而不是 `uvx pytest`？
+8. Rye 的产品 CLI 与开发任务为什么不能机械地一起迁入 `[project.scripts]`？
+
+本阶段没有上传任何产物；TestPyPI/正式发布认证教学和 uv 的 dry-run 依赖图实验均已
+跳过。Rye 配置映射已经讲解，但理解题尚未验收，也没有进行迁移实操；下次从 Rye 的迁移
+边界继续，而不是直接进入 Nox。第 16 章仍未完成，因此不创建第 16 章 review，也不推进
+`course.toml` 中的正式进度。
+
 ### 其他项目管理工具
 
 | 工具 | 课程中的定位 |
