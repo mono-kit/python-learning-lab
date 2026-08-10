@@ -515,6 +515,123 @@ python -m zipfile -l dist/*.whl
 - 入口点是否生成。
 - `importlib.metadata.version()` 是否正确。
 
+### 第二阶段复盘：从项目配置到真实 wheel
+
+本阶段不再只观察源码里的模块，而是沿着完整产物流回答三个问题：构建工具读取了什么、
+sdist 和 wheel 为什么包含不同文件，以及安装后的程序是否真的能脱离源码目录运行。
+
+#### 三种启动方式执行的代码不同
+
+同一个 package 可以有三条常见启动路径：
+
+```text
+import python_learning_lab
+→ 导入 package，执行 __init__.py
+→ 不会因为存在 __main__.py 就自动执行它
+
+python -m python_learning_lab
+→ 先建立 package 上下文，再执行 package/__main__.py
+→ 运行入口中的 __name__ 是 "__main__"
+
+python-learning-lab
+→ 安装工具根据 [project.scripts] 生成命令包装器
+→ 包装器导入 python_learning_lab.__main__:main 并调用函数
+```
+
+直接执行包内的 `__main__.py` 文件不等价于 `python -m package`：前者缺少解释器根据完整
+模块名建立的 `__package__` 和 `__spec__` 上下文，包内相对导入可能因此失败。
+
+#### `pyproject.toml` 中每块配置各有所有者
+
+当前项目的关键配置关系是：
+
+```text
+[build-system]
+→ 构建前端要安装哪个后端、调用哪个标准构建接口
+
+[project]
+→ distribution 名称、版本、Python 范围、运行时依赖和入口点
+
+[project.optional-dependencies]
+→ 安装者可以选择的 extras；本项目的 dev 也是发布元数据中的一个 extra
+
+[tool.setuptools.packages.find]
+→ setuptools 从哪个 src 根目录发现 import package
+
+[tool.setuptools.package-data]
+→ 哪些非 Python 包内资源进入 wheel
+
+[tool.pytest.*] / [tool.ruff] / [tool.mypy]
+→ 各开发工具自己的行为，不负责决定 wheel 的包发现规则
+```
+
+因此，pytest 能从源码导入 package，只能证明测试路径配置有效；它不能证明 setuptools
+找到了相同代码，更不能证明 wheel 包含所需文件。这正是 `src/` 布局要暴露的“源码目录
+碰巧可导入”问题。
+
+运行依赖与构建依赖也属于两个阶段：`[project].dependencies` 安装到使用者环境；
+`[build-system].requires` 只用于隔离构建环境。一个纯 Python wheel 安装完成后，不需要为
+了运行它而继续保留 setuptools。
+
+#### 文件清单由构建配置产生，Nox 只负责验证
+
+本仓库刻意让两个产物服务不同对象：
+
+- `MANIFEST.in` 补充 sdist 的课程源码、讲义、练习、测试和工程配置。
+- setuptools 的 package discovery 决定 wheel 中的 Python package。
+- `package-data` 把 `resources/welcome.txt` 这类运行时资源加入 wheel。
+- Nox 的 `build` 和 `package_smoke` session 检查结果，但不会反过来改变产物内容。
+
+由此可以推导：若删除 `package-data` 声明，不能只看 `MANIFEST.in` 就断言 wheel 中一定
+有或没有资源；setuptools 的 `include-package-data`、生成的文件清单和构建缓存也可能参与
+选择，必须清理旧产物后重新审计。若只删除 Nox 的资源断言，构建内容不会改变，只是缺少
+了发现错误的门禁。更换构建后端时也不能假设 setuptools 的配置继续生效，必须按照新
+后端的规则重新声明并审计文件范围。
+
+本次实际审计得到：wheel 只含最小运行时代码、distribution 元数据和声明的包内资源；
+sdist 还含完整课程资产。这里 sdist 比 wheel 大，是本仓库内容策略造成的事实，不是
+“sdist 永远更大”的格式规则。
+
+纯 Python wheel 文件名中的标签：
+
+```text
+python_learning_lab-0.1.0-py3-none-any.whl
+                             │    │    └─ 平台标签：任意平台
+                             │    └────── ABI 标签：不绑定特定 Python ABI
+                             └─────────── Python 标签：Python 3
+```
+
+其中 `none` 描述 ABI，不表示“没有依赖”或“不限制依赖版本”；依赖要求记录在 wheel 的
+distribution 元数据中。
+
+#### 干净安装验证的是产物，不是工作树
+
+本阶段把构建出的真实 wheel 安装进全新虚拟环境，并从源码目录之外运行。结果证明：
+
+- `python_learning_lab.__file__` 来自虚拟环境的 `site-packages`，不是仓库源码。
+- `importlib.metadata.version("python-learning-lab")` 能读取 wheel 安装的版本元数据。
+- `importlib.resources` 能读取 wheel 内的 `welcome.txt`。
+- `python -m python_learning_lab` 和生成的 `python-learning-lab` 命令都能正常运行。
+- 运行环境中找不到 setuptools，程序仍能工作，说明构建后端没有泄漏成运行时依赖。
+
+这组结果才构成 wheel smoke test。editable install、在仓库根目录 import 成功，或者直接
+检查源码文件，都不能替代它。
+
+#### 第二阶段快速自测
+
+1. 普通 `import package` 为什么不会自动运行 `package/__main__.py`？
+2. `[project.scripts]` 左右两侧分别代表什么？
+3. pytest 能导入源码，为什么不能证明 wheel 一定能导入？
+4. sdist 和 wheel 的主要使用者与文件范围有什么差异？
+5. wheel 标签 `py3-none-any` 的三个部分分别描述什么？
+6. 为什么构建检查删除后，产物内容不会自动变化？
+7. 为什么应从源码目录之外安装并验证 wheel？
+8. 干净运行环境没有 setuptools，为什么程序仍然能够运行？
+
+本阶段已经完成本地构建、产物审计和真实 wheel 的隔离安装验证；没有向任何包索引上传
+文件。第 16 章接下来学习版本与发布策略，整章仍未完成，因此此时不创建第 16 章 review，
+也不推进 `course.toml` 中的正式进度。
+
 ## 8. 版本与发布策略
 
 ### PEP 440 版本
